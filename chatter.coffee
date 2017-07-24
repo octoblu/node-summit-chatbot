@@ -3,7 +3,6 @@ MeshbluHttp     = require 'meshblu-http'
 MeshbluFirehose = require 'meshblu-firehose-socket.io'
 MeshbluConfig   = require 'meshblu-config'
 colors          = require 'colors/safe'
-_               = require 'lodash'
 moment          = require 'moment'
 
 class Chatter
@@ -54,7 +53,6 @@ class Chatter
     return {
       devices: ['f6798094-fe2e-4f09-9bf3-4f688b4e8738']
       message: msg
-      sessionId: moment().format('YYYY-MM-DD')
     }
 
   onMessage: ({data}) =>
