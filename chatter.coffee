@@ -7,27 +7,38 @@ _               = require 'lodash'
 moment          = require 'moment'
 
 class Chatter
-  constructor: (@meshbluConfig)->
+  constructor: ()->
+    @meshbluConfig = new MeshbluConfig().toJSON()
     @prompt = readline.createInterface
       input:  process.stdin,
       output: process.stdout
 
   start: =>
     console.log colors.magenta 'Loading chat service...'
+    @setupFirehose()
+    @setupMeshbluHttp()
 
-    meshbluConfig = new MeshbluConfig().toJSON()
-    @meshbluHttp = new MeshbluHttp meshbluConfig
-    @meshbluFirehose = new MeshbluFirehose {meshbluConfig}
+  setupFirehose: =>
+    meshbluFirehose = new MeshbluFirehose {@meshbluConfig}
+    meshbluFirehose.on 'error', @onError
+    meshbluFirehose.on 'message', @onMessage
+    meshbluFirehose.connect()
+
+  setupMeshbluHttp: =>
+    @meshbluHttp = new MeshbluHttp @meshbluConfig
 
     @meshbluHttp.whoami (error, @user) =>
       console.error error.stack if error?
       console.log colors.cyan "Your username is #{@user.name} and your uuid is #{@user.uuid}"
 
     @prompt.on 'line', @onInput
-    @meshbluFirehose.on 'message', @onMessage
+
 
   onInput: (msg) =>
     @sendMessage msg
+
+  onError: (error) =>
+    console.error "error: #{error.stack || error}"
 
   sendMessage: (msg) =>
     @meshbluHttp.message @getMessage(msg), (error) =>
@@ -46,7 +57,7 @@ class Chatter
       sessionId: moment().format()
     }
 
-  onMessage: (msg) =>
-    console.log colors.yellow "Received: #{msg}"
+  onMessage: ({data}) =>
+    console.log colors.yellow "Received: #{data.message}"
 
 module.exports = Chatter
