@@ -53,8 +53,8 @@ class Chatter
   getMessage: (msg) =>
     return {
       devices: ['f6798094-fe2e-4f09-9bf3-4f688b4e8738']
-      query: msg
-      sessionId: moment().format()
+      message: msg
+      sessionId: moment().format('YYYY-MM-DD')
     }
 
   onMessage: ({data}) =>
