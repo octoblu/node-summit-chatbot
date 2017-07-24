@@ -30,11 +30,7 @@ class Chatter
       console.error error.stack if error?
       console.log colors.cyan "Your username is #{@user.name} and your uuid is #{@user.uuid}"
 
-    @prompt.on 'line', @onInput
-
-
-  onInput: (msg) =>
-    @sendMessage msg
+    @prompt.on 'line', @sendMessage
 
   onError: (error) =>
     console.error "error: #{error.stack || error}"
