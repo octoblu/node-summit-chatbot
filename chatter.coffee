@@ -12,6 +12,7 @@ class Chatter
       output: process.stdout
 
   start: =>
+    process.stdout.write('\x1Bc')
     @spinner = ora('Loading chat service').start()
     @setupFirehose()
     @setupMeshbluHttp()
