@@ -2,8 +2,8 @@ readline        = require 'readline'
 MeshbluHttp     = require 'meshblu-http'
 MeshbluFirehose = require 'meshblu-firehose-socket.io'
 MeshbluConfig   = require 'meshblu-config'
+ora             = require 'ora'
 colors          = require 'colors/safe'
-moment          = require 'moment'
 
 class Chatter
   constructor: ()->
@@ -13,13 +13,16 @@ class Chatter
       output: process.stdout
 
   start: =>
-    console.log colors.magenta 'Loading chat service...'
+    @spinner = ora('Loading chat service').start()
     @setupFirehose()
     @setupMeshbluHttp()
 
   setupFirehose: =>
     meshbluFirehose = new MeshbluFirehose {@meshbluConfig}
-    meshbluFirehose.on 'error', @onError
+    meshbluFirehose.on 'error', (error) =>
+      return unless error?
+      @spinner.fail(error.toString())
+
     meshbluFirehose.on 'message', @onMessage
     meshbluFirehose.connect()
 
@@ -27,23 +30,40 @@ class Chatter
     @meshbluHttp = new MeshbluHttp @meshbluConfig
 
     @meshbluHttp.whoami (error, @user) =>
-      console.error error.stack if error?
-      console.log colors.cyan "Your username is #{@user.name} and your uuid is #{@user.uuid}"
+      return @spinner.fail(error.toString()) if error?
+      @spinner.clear()
+      @spinner.succeed "Connected as \"#{@user.name}\" (#{@user.uuid})"
+      @spinner.info("Available commands:")
+      @spinner.info("  - Ask me what the weather is")
+      @spinner.info("  - Ask me about the latest version in running in beekeeper")
+      @spinner.info("  - Tell me a joke")
+      @readLine()
 
-    @prompt.on 'line', @sendMessage
-
-  onError: (error) =>
-    console.error "error: #{error.stack || error}"
+  readLine: =>
+    @spinner.warn "Type a command:  "
+    @spinner.stop()
+    process.stdin.once 'data', =>
+      @prompt.once 'line', (line) =>
+        return unless line
+        @sendMessage(line)
 
   sendMessage: (msg) =>
+    @spinner.start('Sending message')
     @meshbluHttp.message @getMessage(msg), (error) =>
       if error?
-        console.log colors.error "I sent your message, but there was a problem"
-        console.error error.stack
+        @spinner.fail("I sent your message, but there was a problem")
         return
-
-      console.log colors.green "I actually sent it. Congratulate me."
-
+      @spinner.text = "I actually sent it. Congratulate me."
+      @spinner.text = "Waiting for response"
+      @waiting = true
+      clearTimeout(@timeout)
+      @timeout = setTimeout =>
+        return unless @waiting
+        @spinner.fail("Timeout")
+        @spinner.stop()
+        @readLine()
+        @waiting = false
+      , 10 * 1000
 
   getMessage: (msg) =>
     return {
@@ -53,6 +73,12 @@ class Chatter
     }
 
   onMessage: ({data}) =>
-    console.log colors.yellow "Received: #{data.message}"
+    if data?.message?
+      @spinner.succeed "Received: #{data.message}"
+    else
+      @spinner.fail "Invalid message received"
+    if @waiting
+      @readLine()
+      @waiting = false
 
 module.exports = Chatter
