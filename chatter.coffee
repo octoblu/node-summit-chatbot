@@ -3,7 +3,6 @@ MeshbluHttp     = require 'meshblu-http'
 MeshbluFirehose = require 'meshblu-firehose-socket.io'
 MeshbluConfig   = require 'meshblu-config'
 ora             = require 'ora'
-colors          = require 'colors/safe'
 
 class Chatter
   constructor: ()->
