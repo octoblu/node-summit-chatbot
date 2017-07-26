@@ -33,10 +33,10 @@ class Chatter
       return @spinner.fail(error.toString()) if error?
       @spinner.clear()
       @spinner.succeed "Connected as \"#{@user.name}\" (#{@user.uuid})"
-      @spinner.info("Available commands:")
-      @spinner.info("  - Ask me what the weather is")
-      @spinner.info("  - Ask me about the latest version in running in beekeeper")
-      @spinner.info("  - Tell me a joke")
+      @spinner.info("Example commands:")
+      @spinner.info("  - 'What is the current weather in Tempe?'")
+      @spinner.info("  - 'What is the latest version of meshblu?'")
+      @spinner.info("  - 'Tell me a joke'")
       @readLine()
 
   readLine: =>
